@@ -2,6 +2,7 @@
 title: "GeoPAT2: Entropy calculations"
 output: 
   html_document: 
+    keep_md: yes
     number_sections: yes
     toc: yes
 ---
@@ -12,8 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-GeoPAT 2 is an open-source software written in C and dedicated to pattern-based spatial and temporal analysis. 
-Four main types of analysis available in GeoPAT 2 are (i) search, (ii) change detection, (iii) segmentation, and (iv) clustering.
+**GeoPAT 2** is an open-source software written in C and dedicated to pattern-based spatial and temporal analysis. 
+Four main types of analysis available in **GeoPAT 2** are (i) search, (ii) change detection, (iii) segmentation, and (iv) clustering.
 However, additional applications are also possible, including extracting information about spatial patterns.
 
 ```{r echo=FALSE, eval=TRUE}
@@ -31,8 +32,8 @@ Therefore, this blog post shows the code and describes how to calculate Shannon 
 
 # Setup
 
-In the post, we will use GeoPAT 2 and R.
-Installation instructions for GeoPAT 2 can be found at https://github.com/Nowosad/geopat2#Installation and for R at https://cloud.r-project.org/. 
+In the post, we will use **GeoPAT 2** and R.
+Installation instructions for **GeoPAT 2** can be found at https://github.com/Nowosad/geopat2#Installation and for R at https://cloud.r-project.org/. 
 Additionally, a few R packages should be installed.
 
 ```{r, eval=FALSE}
@@ -86,7 +87,7 @@ p1
 
 # Calculate Shannon entropy
 
-The `gpat_gridhis` module reads the input raster data and creates an output based on selected size and signature.
+The `gpat_gridhis` module reads the input raster data from a file and creates an output based on selected size and signature.
 Firstly, we need to choose the size of the local landscapes. 
 The input data has a resolution of 30 meters, and we decided on local landscapes of 600 by 600 meters (0.36 km^2^) by setting both `size` (`-z`) and `shift` (`-f`) to 20 (map resolution of 30 * 20 = 600 meters). 
 Secondly, we need to pick a proper signature - in this case, it is `ent` (Shannon **ent**ropy).
@@ -105,8 +106,8 @@ system("gpat_grid2txt -i data/augusta_ent.grd -o data/augusta_ent.txt")
 # Create a vector grid
 
 The output text file can be next processed in any software.
-However, we will use R here, as there is an R package for working with GeoPAT2 outputs called **rgeopat2**.
-One of its functions, `gpat_create_grid()`, creates a spatial vector object recreating the grid used in the previous GeoPAT2 calculations.
+However, we will use R here, as there is an R package for working with **GeoPAT 2** outputs called **rgeopat2**.
+One of its functions, `gpat_create_grid()`, creates a spatial vector object recreating the grid used in the previous **GeoPAT 2** calculations.
 
 ```{r}
 augusta_grid = gpat_create_grid("data/augusta_ent.grd.hdr")
@@ -143,8 +144,8 @@ Now we can combine the spatial object with the data frame.
 augusta_grid = bind_cols(augusta_grid, augusta_ent)
 ```
 
-The output, `augusta_grid` is a set of polygons, where each is represented by the value of Shannon entropy.
-It allows distinguishing the local landscapes with only one or two land cover categories (low values of Shannon entropy) and ... (high values of Shannon entropy).
+The output, `augusta_grid`z is a set of polygons, where each is represented by the value of Shannon entropy.
+It allows distinguishing the local landscapes with only one or two land cover categories (low values of Shannon entropy) and the ones with many land cover categories (high values of Shannon entropy).
 
 ```{r, message=FALSE}
 p3 = tm_shape(augusta_nlcd) +
@@ -158,12 +159,12 @@ p3
 
 # Summary
 
-This post has shown how to use GeoPAT 2 to extract certain metric (Shannon entropy), and how to connect the result with its spatial representation for a relatively small area in Georgia, USA.
+This post has shown how to use **GeoPAT 2** to extract certain metric (Shannon entropy), and how to connect the result with its spatial representation for a relatively small area in Georgia, USA.
 
 ```{r}
 tmap_arrange(p1, p2, p3, ncol = 1)
 ```
 
-However, GeoPAT 2 was written to handle large spatial rasters, including ones on continental and global scales.
+However, **GeoPAT 2** was written to handle large spatial rasters, including ones on continental and global scales.
 Therefore, I encourage you to try it on your own study area - regardless of its size.
-You can also read more about additional applications of GeoPAT 2 at https://github.com/Nowosad/geopat2.
+You can also read more about additional applications of **GeoPAT 2** at https://github.com/Nowosad/geopat2.
