@@ -7,9 +7,7 @@ output:
     toc: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 # Introduction
 
@@ -17,16 +15,12 @@ knitr::opts_chunk$set(echo = TRUE)
 Four main types of analysis available in **GeoPAT 2** are (i) search, (ii) change detection, (iii) segmentation, and (iv) clustering.
 However, additional applications are also possible, including extracting information about spatial patterns.
 
-```{r echo=FALSE, eval=TRUE}
-blogdown::shortcode("tweet", "1085174957678780417")
-```
+<!--html_preserve-->{{% tweet "1085174957678780417" %}}<!--/html_preserve-->
 
 In the above case, I was interested in extracting values of Shannon entropy of land cover categories for local landscapes on a global scale.
 It had prompted a comment from [Steffen Ehrmann](https://twitter.com/DerEhrmann):
 
-```{r echo=FALSE, eval=TRUE}
-blogdown::shortcode("tweet", "1085651345552490496")
-```
+<!--html_preserve-->{{% tweet "1085651345552490496" %}}<!--/html_preserve-->
 
 Therefore, this blog post shows the code and describes how to calculate Shannon entropy of land cover categories.
 
@@ -36,7 +30,8 @@ In the post, we will use **GeoPAT 2** and R.
 Installation instructions for **GeoPAT 2** can be found at https://github.com/Nowosad/geopat2#Installation and for R at https://cloud.r-project.org/. 
 Additionally, a few R packages should be installed.
 
-```{r, eval=FALSE}
+
+```r
 pkgs = c(
   "rgeopat2",          # helper functions for GeoPAT 2 in R
   "sf",                # vector data classes
@@ -53,7 +48,8 @@ if(any(to_install)) {
 
 Now you have the necessary packages, the next step is to attach the ones we will use.
 
-```{r, message=FALSE}
+
+```r
 library(rgeopat2)
 library(sf)
 library(raster)
@@ -67,14 +63,16 @@ library(landscapemetrics)
 We will use the `augusta_nlcd` dataset from the **landscapemetics** package as an example.
 It is a raster representing land cover categories for an area of about 270 km^2^ west from Augusta, Georga.
 
-```{r, warning=FALSE}
+
+```r
 data("augusta_nlcd")
 augusta_nlcd = deratify(augusta_nlcd, "NLCD.2011.Land.Cover.Class")
 dir.create("data")
 writeRaster(augusta_nlcd, "data/augusta_nlcd.tif", overwrite = TRUE)
 ```
 
-```{r p1, message=FALSE}
+
+```r
 nlcd_colors = c("#000000", "#00F900", "#476BA0", "#D1DDF9", "#DDC9C9", "#D89382",
                 "#ED0000", "#AA0000", "#B2ADA3",  "#68AA63", "#1C6330", 
                 "#B5C98E", "#dcca8f", 
@@ -85,6 +83,8 @@ p1 <- tm_shape(augusta_nlcd) +
 p1
 ```
 
+![](01-entropy-calculations_files/figure-html/p1-1.png)<!-- -->
+
 # Calculate Shannon entropy
 
 The `gpat_gridhis` module reads the input raster data from a file and creates an output based on selected size and signature.
@@ -93,13 +93,15 @@ The input data has a resolution of 30 meters, and we decided on local landscapes
 Secondly, we need to pick a proper signature - in this case, it is `ent` (Shannon **ent**ropy).
 For this signature, we also need to disable any value normalization (`-n 'none'`).
 
-```{r}
+
+```r
 system("gpat_gridhis -i data/augusta_nlcd.tif -o data/augusta_ent.grd -z 20 -f 20 -s 'ent' -n 'none'")
 ```
 
 The output is a binary file and we can easily convert it to text with the `gpat_grid2txt` module.
 
-```{r}
+
+```r
 system("gpat_grid2txt -i data/augusta_ent.grd -o data/augusta_ent.txt")
 ```
 
@@ -109,13 +111,15 @@ The output text file can be next processed in any software.
 However, we will use R here, as there is an R package for working with **GeoPAT 2** outputs called **rgeopat2**.
 One of its functions, `gpat_create_grid()`, creates a spatial vector object recreating the grid used in the previous **GeoPAT 2** calculations.
 
-```{r}
+
+```r
 augusta_grid = gpat_create_grid("data/augusta_ent.grd.hdr")
 ```
 
 This new object contains a number of regular square polygons (aka local landscapes), each with the size of 600 by 600 meters.
 
-```{r p2, message=FALSE}
+
+```r
 p2 = tm_shape(augusta_nlcd) +
   tm_raster("NLCD.2011.Land.Cover.Class", palette = nlcd_colors) + 
   tm_shape(augusta_grid) +
@@ -124,30 +128,46 @@ p2 = tm_shape(augusta_nlcd) +
 p2
 ```
 
+![](01-entropy-calculations_files/figure-html/p2-1.png)<!-- -->
+
 # Read data to R and connect it to the grid
 
 The **rgeopat2** also has a helper function, `gpat_read_txt()`, for reading text outputs from GeoPAT2.
 
-```{r}
+
+```r
 augusta_ent = gpat_read_txt("data/augusta_ent.txt", signature = "ent")
 ```
 
 The new object `augusta_ent` is a data frame with five columns describing each local landscape - (i) value of Shannon entropy, (ii) number of land cover categories, (iii) area with values in cells^2^, (iv) column number, (v) row number.
 
-```{r}
+
+```r
 head(augusta_ent)
+```
+
+```
+##   Shannon_entropy number_of_categories object_size col row
+## 1        1.174216                    5         400   1   1
+## 2        2.005147                    6         400   2   1
+## 3        1.485236                    5         400   3   1
+## 4        2.200218                   10         400   4   1
+## 5        2.226918                    8         400   5   1
+## 6        1.918720                    6         400   6   1
 ```
 
 Now we can combine the spatial object with the data frame.
 
-```{r}
+
+```r
 augusta_grid = bind_cols(augusta_grid, augusta_ent)
 ```
 
 The output, `augusta_grid`z is a set of polygons, where each is represented by the value of Shannon entropy.
 It allows distinguishing the local landscapes with only one or two land cover categories (low values of Shannon entropy) and the ones with many land cover categories (high values of Shannon entropy).
 
-```{r p3, message=FALSE}
+
+```r
 p3 = tm_shape(augusta_nlcd) +
   tm_raster(legend.show = FALSE, palette = nlcd_colors) +
   tm_shape(augusta_grid) +
@@ -157,13 +177,18 @@ p3 = tm_shape(augusta_nlcd) +
 p3
 ```
 
+![](01-entropy-calculations_files/figure-html/p3-1.png)<!-- -->
+
 # Summary
 
 This post has shown how to use **GeoPAT 2** to extract certain metric (Shannon entropy), and how to connect the result with its spatial representation for a relatively small area in Georgia, USA.
 
-```{r p4}
+
+```r
 tmap_arrange(p1, p2, p3, ncol = 1)
 ```
+
+![](01-entropy-calculations_files/figure-html/p4-1.png)<!-- -->
 
 However, **GeoPAT 2** was written to handle large spatial rasters, including ones on continental and global scales.
 Therefore, I encourage you to try it on your own study area - regardless of its size.
