@@ -12,22 +12,22 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-GeoPAT 2 is an open-source software written in C and dedicated for pattern-based spatial and temporal analysis. 
+GeoPAT 2 is an open-source software written in C and dedicated to pattern-based spatial and temporal analysis. 
 Four main types of analysis available in GeoPAT 2 are (i) search, (ii) change detection, (iii) segmentation, and (iv) clustering.
-However, addictional applications are also possible, including extracting information about spatial patterns.
+However, additional applications are also possible, including extracting information about spatial patterns.
 
 ```{r echo=FALSE, eval=TRUE}
 blogdown::shortcode("tweet", "1085174957678780417")
 ```
 
-In the above case, I was interested in extracting values of Shannon entropy of land cover categories for a number of local landscapes on a global scale.
+In the above case, I was interested in extracting values of Shannon entropy of land cover categories for local landscapes on a global scale.
 It had prompted a comment from [Steffen Ehrmann](https://twitter.com/DerEhrmann):
 
 ```{r echo=FALSE, eval=TRUE}
 blogdown::shortcode("tweet", "1085651345552490496")
 ```
 
-Therefore, this blog post shows the code, which allows for calculation of Shannon entropy of land cover categories.
+Therefore, this blog post shows the code and describes how to calculate Shannon entropy of land cover categories.
 
 # Setup
 
@@ -64,7 +64,7 @@ library(landscapemetrics)
 # Input data
 
 We will use the `augusta_nlcd` dataset from the **landscapemetics** package as an example.
-It is a raster representing land cover catergories for an area of about 270 km^2^ west from Augusta, Georga.
+It is a raster representing land cover categories for an area of about 270 km^2^ west from Augusta, Georga.
 
 ```{r, warning=FALSE}
 data("augusta_nlcd")
@@ -87,10 +87,10 @@ p1
 # Calculate Shannon entropy
 
 The `gpat_gridhis` module reads the input raster data and creates an output based on selected size and signature.
-Firstly, we need to choose a size of the local landscapes. 
+Firstly, we need to choose the size of the local landscapes. 
 The input data has a resolution of 30 meters, and we decided on local landscapes of 600 by 600 meters (0.36 km^2^) by setting both `size` (`-z`) and `shift` (`-f`) to 20 (map resolution of 30 * 20 = 600 meters). 
-Secondly, we need to pick a proper signature - in this case it is `ent` (Shannon **ent**ropy).
-For this signature we also need to disable any value normalization (`-n 'none'`).
+Secondly, we need to pick a proper signature - in this case, it is `ent` (Shannon **ent**ropy).
+For this signature, we also need to disable any value normalization (`-n 'none'`).
 
 ```{r}
 system("gpat_gridhis -i data/augusta_nlcd.tif -o data/augusta_ent.grd -z 20 -f 20 -s 'ent' -n 'none'")
@@ -112,7 +112,7 @@ One of its functions, `gpat_create_grid()`, creates a spatial vector object recr
 augusta_grid = gpat_create_grid("data/augusta_ent.grd.hdr")
 ```
 
-This new object contains a number of regular square polygons (aka local landscapes), each with size of 600 by 600 meters.
+This new object contains a number of regular square polygons (aka local landscapes), each with the size of 600 by 600 meters.
 
 ```{r, message=FALSE}
 p2 = tm_shape(augusta_nlcd) +
@@ -144,7 +144,7 @@ augusta_grid = bind_cols(augusta_grid, augusta_ent)
 ```
 
 The output, `augusta_grid` is a set of polygons, where each is represented by the value of Shannon entropy.
-It allows to see the local landscapes with only one or two land cover categories (low values of Shannon entropy) and ... (high values of Shannon entropy).
+It allows distinguishing the local landscapes with only one or two land cover categories (low values of Shannon entropy) and ... (high values of Shannon entropy).
 
 ```{r, message=FALSE}
 p3 = tm_shape(augusta_nlcd) +
@@ -165,5 +165,5 @@ tmap_arrange(p1, p2, p3, ncol = 1)
 ```
 
 However, GeoPAT 2 was written to handle large spatial rasters, including ones on continental and global scales.
-Therefore, I encourge you to try it on your own study area - regardeless on its size.
-You can also read more about additionall applications of GeoPAT 2 at https://github.com/Nowosad/geopat2.
+Therefore, I encourage you to try it on your own study area - regardless of its size.
+You can also read more about additional applications of GeoPAT 2 at https://github.com/Nowosad/geopat2.
